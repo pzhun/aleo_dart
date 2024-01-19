@@ -8,8 +8,6 @@ environment:
 
 # Add regular dependencies here.
 dependencies:
-  # path: ^1.8.0
-  bip32: ^2.0.0
   bip39: ^1.0.6
   crypto: ^3.0.3
   ffi: ^2.1.0
