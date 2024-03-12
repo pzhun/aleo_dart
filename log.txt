@@ -1,0 +1,80 @@
+00:00 +0: build transaction
+
+Attempting to transfer of type: Private of 1000000 to aleo1rhgdu77hgyqd3xjj8ucu3jj9r2krwz6mnzyd80gncr5fxcwlh5rsvzp9px
+✅ Request              (Constant: 40832, Public: 11, Private: 26950, Constraints: 26970, NonZeros: (53374, 66644, 37991))
+✅ Function 'transfer_private()' (Constant: 42244, Public: 11, Private: 31051, Constraints: 31077, NonZeros: (60933, 74919, 44423))
+✅ Response             (Constant: 47950, Public: 15, Private: 50681, Constraints: 50729, NonZeros: (98547, 109769, 77341))
+✅ Complete             (Constant: 47950, Public: 15, Private: 50681, Constraints: 50729, NonZeros: (98547, 109769, 77341))
+✅ Request              (Constant: 7921, Public: 11, Private: 26950, Constraints: 26970, NonZeros: (53374, 66644, 37991))
+✅ Function 'transfer_private()' (Constant: 9333, Public: 11, Private: 31051, Constraints: 31077, NonZeros: (60933, 74919, 44423))
+✅ Response             (Constant: 15039, Public: 15, Private: 50681, Constraints: 50729, NonZeros: (98547, 109769, 77341))
+✅ Complete             (Constant: 15039, Public: 15, Private: 50681, Constraints: 50729, NonZeros: (98547, 109769, 77341))
+Number of padded public variables: 16
+Number of private variables: 50684
+Number of num_constraints: 50730
+Number of non-zero entries in A: 98548
+Number of non-zero entries in B: 109770
+Number of non-zero entries in C: 77342
+Loading 65536 powers
+Loading 131072 powers
+Loading 131072 shifted powers
+
+⚠️  "shifted-powers-of-beta-17.usrs.2025178" does not exist. Downloading and storing it (in "/home/zhun/.aleo/resources/shifted-powers-of-beta-17.usrs.2025178").
+
+   Installation - Downloading "https://s3-us-west-1.amazonaws.com/testnet3.parameters/shifted-powers-of-beta-17.usrs.2025178"
+   Installation - 100.00% complete (6 MB total)   Installation - Storing file in "/home/zhun/.aleo/resources/shifted-powers-of-beta-17.usrs.2025178"
+Loading 65536 shifted powers
+Loading 262144 powers
+
+⚠️  "powers-of-beta-18.usrs.7a12bcb" does not exist. Downloading and storing it (in "/home/zhun/.aleo/resources/powers-of-beta-18.usrs.7a12bcb").
+
+   Installation - Downloading "https://s3-us-west-1.amazonaws.com/testnet3.parameters/powers-of-beta-18.usrs.7a12bcb"
+   Installation - 100.00% complete (12 MB total)   Installation - Storing file in "/home/zhun/.aleo/resources/powers-of-beta-18.usrs.7a12bcb"
+✅ State Path for 2843557642139952723040972426496619162525614204970885458217405033075308643657field (Constant: 29321, Public: 4, Private: 127029, Constraints: 127226, NonZeros: (273810, 164171, 227499))
+
+⚠️  "inclusion.prover.cd85cc5" does not exist. Downloading and storing it (in "/home/zhun/.aleo/resources/inclusion.prover.cd85cc5").
+
+   Installation - Downloading "https://s3-us-west-1.amazonaws.com/testnet3.parameters/inclusion.prover.cd85cc5"
+   Installation - 100.00% complete (221 MB total)   Installation - Storing file in "/home/zhun/.aleo/resources/inclusion.prover.cd85cc5"
+Number of padded public variables in Prover::Init: 8
+Number of private variables: 127032
+Number of constraints: 127227
+Number of non-zero entries in A: 273811
+Number of non-zero entries in B: 164172
+Number of non-zero entries in C: 227500
+Number of padded public variables in Prover::Init: 16
+Number of private variables: 50684
+Number of constraints: 50730
+Number of non-zero entries in A: 98548
+Number of non-zero entries in B: 109770
+Number of non-zero entries in C: 77342
+
+
+✅ Request              (Constant: 7787, Public: 12, Private: 25874, Constraints: 25894, NonZeros: (49058, 58919, 36847))
+✅ Function 'fee_private()' (Constant: 8666, Public: 12, Private: 28025, Constraints: 28052, NonZeros: (53356, 63163, 40164))
+✅ Response             (Constant: 11835, Public: 14, Private: 37840, Constraints: 37878, NonZeros: (72163, 80588, 56623))
+✅ Complete             (Constant: 11835, Public: 14, Private: 37840, Constraints: 37878, NonZeros: (72163, 80588, 56623))
+✅ Request              (Constant: 7787, Public: 12, Private: 25874, Constraints: 25894, NonZeros: (49058, 58919, 36847))
+✅ Function 'fee_private()' (Constant: 8666, Public: 12, Private: 28025, Constraints: 28052, NonZeros: (53356, 63163, 40164))
+✅ Response             (Constant: 11835, Public: 14, Private: 37840, Constraints: 37878, NonZeros: (72163, 80588, 56623))
+✅ Complete             (Constant: 11835, Public: 14, Private: 37840, Constraints: 37878, NonZeros: (72163, 80588, 56623))
+Number of padded public variables: 16
+Number of private variables: 37843
+Number of num_constraints: 37879
+Number of non-zero entries in A: 72164
+Number of non-zero entries in B: 80589
+Number of non-zero entries in C: 56624
+✅ State Path for 2843557642139952723040972426496619162525614204970885458217405033075308643657field (Constant: 29321, Public: 4, Private: 127029, Constraints: 127226, NonZeros: (273810, 164171, 227499))
+Number of padded public variables in Prover::Init: 16
+Number of private variables: 37843
+Number of constraints: 37879
+Number of non-zero entries in A: 72164
+Number of non-zero entries in B: 80589
+Number of non-zero entries in C: 56624
+Number of padded public variables in Prover::Init: 8
+Number of private variables: 127032
+Number of constraints: 127227
+Number of non-zero entries in A: 273811
+Number of non-zero entries in B: 164172
+Number of non-zero entries in C: 227500
+12:15 +1: All tests passed!
