@@ -1,5 +1,13 @@
 # aleo_rust
 
+> **Temporary repository notice**
+>
+> This repository has been restored because it is still required by existing
+> applications and integrations. It will continue to be used until the
+> replacement repository is ready. After the migration is complete, this
+> repository is expected to be removed. New long-term development should target
+> the replacement repository once it becomes available.
+
 cd aleo_rust/
 cargo build --release
 
