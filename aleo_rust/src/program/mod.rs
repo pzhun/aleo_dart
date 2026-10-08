@@ -108,7 +108,7 @@ impl<N: Network> ProgramManager<N> {
             .iter()
             .try_for_each(|(_, import)| {
                 if import.id() != &credits_id {
-                    vm.process().write().add_program(import)?;
+                    vm.process().lock().add_program(import)?;
                 }
                 Ok::<_, Error>(())
             })?;
@@ -119,9 +119,9 @@ impl<N: Network> ProgramManager<N> {
             // If the program doesn't have a constructor, use edition 1 to avoid edition 0 execution errors
             // in ConsensusVersion::V8 or higher
             if program.contains_constructor() {
-                vm.process().write().add_program(program)?;
+                vm.process().lock().add_program(program)?;
             } else {
-                vm.process().write().add_program_with_edition(program, 1)?;
+                vm.process().lock().add_program_with_edition(program, 1)?;
             }
         }
         Ok(vm)

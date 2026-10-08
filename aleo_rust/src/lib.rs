@@ -193,8 +193,6 @@ pub extern "C" fn view_key_to_address(view_key_raw: *const c_char) -> *const c_c
     c_string.into_raw()
 }
 
-use rand::{rngs::StdRng, SeedableRng};
-
 #[no_mangle]
 pub extern "C" fn sign_message(
     private_key_raw: *const c_char,
@@ -209,8 +207,8 @@ pub extern "C" fn sign_message(
     unsafe {
         message = slice::from_raw_parts(message_raw, length);
     };
-    let rng = &mut StdRng::from_entropy();
-    let signature = private_key.sign_bytes(message, rng).unwrap();
+    let mut rng: rand::rngs::StdRng = rand::make_rng();
+    let signature = private_key.sign_bytes(message, &mut rng).unwrap();
 
     let c_string = CString::new(signature.to_string()).unwrap();
     c_string.into_raw()

@@ -39,7 +39,7 @@ impl<N: Network> ProgramManager<N> {
         url: &str,
     ) -> Result<OfflineExecution<N>> {
         // Initialize an RNG and query object for the transaction
-        let rng = &mut rand::thread_rng();
+        let rng = &mut rand::rng();
         let uri = url.parse::<http::Uri>().map_err(|_| anyhow!("Invalid URL format"))?;
         let query = Query::<N, BlockMemory<N>>::from(uri);
 
@@ -63,9 +63,9 @@ impl<N: Network> ProgramManager<N> {
                 // If the program doesn't have a constructor, use edition 1 to avoid edition 0 execution errors
                 // in ConsensusVersion::V8 or higher
                 if program.contains_constructor() {
-                    vm.process().write().add_program(program)?;
+                    vm.process().lock().add_program(program)?;
                 } else {
-                    vm.process().write().add_program_with_edition(program, 1)?;
+                    vm.process().lock().add_program_with_edition(program, 1)?;
                 }
             }
             Ok::<(), Error>(())
@@ -73,9 +73,9 @@ impl<N: Network> ProgramManager<N> {
         // If the program doesn't have a constructor, use edition 1 to avoid edition 0 execution errors
         // in ConsensusVersion::V8 or higher
         if program.contains_constructor() {
-            let _ = vm.process().write().add_program(program);
+            let _ = vm.process().lock().add_program(program);
         } else {
-            let _ = vm.process().write().add_program_with_edition(program, 1);
+            let _ = vm.process().lock().add_program_with_edition(program, 1);
         }
 
         // Compute the authorization.
@@ -83,12 +83,12 @@ impl<N: Network> ProgramManager<N> {
 
         // Compute the trace
         let locator = Locator::new(*program_id, function_name);
-        let (response, mut trace) = vm.process().write().execute::<A, _>(authorization, rng)?;
+        let (response, mut trace) = vm.process().lock().execute::<A, _>(authorization, rng)?;
         trace.prepare(&query)?;
         let execution = trace.prove_execution::<A, _>(
             &locator.to_string(),
             VarunaVersion::V2,
-            &mut rand::thread_rng(),
+            &mut rand::rng(),
         )?;
 
         // Get the public outputs
@@ -199,7 +199,7 @@ impl<N: Network> ProgramManager<N> {
         vm: &Option<VM<N, ConsensusMemory<N>>>,
     ) -> Result<Transaction<N>> {
         // Initialize an RNG and query object for the transaction
-        let rng = &mut rand::thread_rng();
+        let rng = &mut rand::rng();
         let uri = node_url.parse::<http::Uri>().map_err(|_| anyhow!("Invalid URL format"))?;
         let query = Query::<N, BlockMemory<N>>::from(uri);
 
@@ -222,25 +222,25 @@ impl<N: Network> ProgramManager<N> {
                 .iter()
                 .try_for_each(|(_, import)| {
                     if import.id() != &credits_id
-                        && !vm.process().read().contains_program(import.id())
+                        && !vm.process().contains_program(import.id())
                     {
-                        vm.process().write().add_program(import)?;
+                        vm.process().lock().add_program(import)?;
                     }
                     Ok::<_, Error>(())
                 })?;
 
             // If the initialization is for an execution, add the program. Otherwise, don't add it as
             // it will be added during the deployment process
-            if !vm.process().read().contains_program(program.id()) {
+            if !vm.process().contains_program(program.id()) {
                 // If the program doesn't have a constructor, use edition 1 to avoid edition 0 execution errors
                 // in ConsensusVersion::V8 or higher
                 if program.contains_constructor() {
-                    vm.process().write().add_program(program)?;
+                    vm.process().lock().add_program(program)?;
                 } else {
-                    vm.process().write().add_program_with_edition(program, 1)?;
+                    vm.process().lock().add_program_with_edition(program, 1)?;
                 }
             }
-            vm.execute(
+            Ok(vm.execute(
                 private_key,
                 (program_id, function_name),
                 inputs,
@@ -248,10 +248,10 @@ impl<N: Network> ProgramManager<N> {
                 priority_fee,
                 Some(&query),
                 rng,
-            )
+            )?)
         } else {
             let vm = Self::initialize_vm(api_client, program, true)?;
-            vm.execute(
+            Ok(vm.execute(
                 private_key,
                 (program_id, function_name),
                 inputs,
@@ -259,7 +259,7 @@ impl<N: Network> ProgramManager<N> {
                 priority_fee,
                 Some(&query),
                 rng,
-            )
+            )?)
         }
     }
 
@@ -291,7 +291,7 @@ impl<N: Network> ProgramManager<N> {
 
         // Create an ephemeral SnarkVM to store the programs
         // Initialize an RNG and query object for the transaction
-        let rng = &mut rand::thread_rng();
+        let rng = &mut rand::rng();
         let uri = url.parse::<http::Uri>().map_err(|_| anyhow!("Invalid URL format"))?;
         let query = Query::<N, BlockMemory<N>>::from(uri);
         let vm = Self::initialize_vm(self.api_client()?, program, true)?;
@@ -303,13 +303,13 @@ impl<N: Network> ProgramManager<N> {
         let authorization = vm.authorize(&private_key, program_id, function_name, inputs, rng)?;
 
         let locator = Locator::new(*program_id, function_name);
-        let (_, mut trace) = vm.process().write().execute::<A, _>(authorization, rng)?;
+        let (_, mut trace) = vm.process().lock().execute::<A, _>(authorization, rng)?;
         trace.prepare(&query)?;
         let execution = trace.prove_execution::<A, _>(
             &locator.to_string(),
             VarunaVersion::V2,
-            &mut rand::thread_rng(),
+            &mut rand::rng(),
         )?;
-        execution_cost(&vm.process().read(), &execution, ConsensusVersion::V10)
+        execution_cost(vm.process(), &execution, ConsensusVersion::V10)
     }
 }

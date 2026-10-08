@@ -72,7 +72,7 @@ impl<N: Network> ProgramManager<N> {
 
         // Generate the execution transaction
         let execution = {
-            let rng = &mut rand::thread_rng();
+            let rng = &mut rand::rng();
 
             // Initialize a VM
             let store = ConsensusStore::<N, ConsensusMemory<N>>::open(StorageMode::Production)?;
@@ -170,7 +170,7 @@ impl<N: Network> ProgramManager<N> {
 
         // Generate the execution transaction
         let execution = {
-            let rng = &mut rand::thread_rng();
+            let rng = &mut rand::rng();
 
             // Initialize a VM
             let store = ConsensusStore::<N, ConsensusMemory<N>>::open(StorageMode::Production)?;
@@ -279,7 +279,7 @@ impl<N: Network> ProgramManager<N> {
 
         // Generate the execution transaction
         let authorization = {
-            let rng = &mut rand::thread_rng();
+            let rng = &mut rand::rng();
 
             // Initialize a VM
             let store = ConsensusStore::<N, ConsensusMemory<N>>::open(StorageMode::Production)?;
@@ -340,7 +340,7 @@ impl<N: Network> ProgramManager<N> {
         // Compute the fee.
 
         // Compute the minimum execution cost.
-        let (minimum_execution_cost, (_, _)) = execution_cost(&vm.process().read(), &execution, ConsensusVersion::V10)?;
+        let (minimum_execution_cost, (_, _)) = execution_cost(vm.process(), &execution, ConsensusVersion::V10)?;
         // Compute the execution ID.
         Ok(minimum_execution_cost)
     }
@@ -364,7 +364,7 @@ impl<N: Network> ProgramManager<N> {
         let private_key = self.get_private_key(password)?;
 
         // Generate the execution transaction
-        let rng = &mut rand::thread_rng();
+        let rng = &mut rand::rng();
 
         // Initialize a VM
         let store = ConsensusStore::<N, ConsensusMemory<N>>::open(StorageMode::Production)?;
@@ -372,7 +372,7 @@ impl<N: Network> ProgramManager<N> {
         // Compute the fee.
 
         // Compute the minimum execution cost.
-        let (minimum_execution_cost, (_, _)) = execution_cost(&vm.process().read(), &execution, ConsensusVersion::V10)?;
+        let (minimum_execution_cost, (_, _)) = execution_cost(vm.process(), &execution, ConsensusVersion::V10)?;
         // Compute the execution ID.
         let execution_id = execution.to_execution_id()?;
         // Authorize the fee.
@@ -403,10 +403,12 @@ impl<N: Network> ProgramManager<N> {
         // Initialize a VM
         let store = ConsensusStore::<N, ConsensusMemory<N>>::open(StorageMode::Production)?;
         let vm = VM::from(store)?;
-        let rng = &mut rand::thread_rng();
+        let rng = &mut rand::rng();
 
-        // Compute the execution.
-        let (execution, _response) = vm.execute_authorization_raw(authorization, &query, rng)?;
+        // Return the raw Execution for the app/server split flow:
+        // app builds fee authorization later from this execution string.
+        let transaction = vm.execute_authorization(authorization, None, Some(&query), rng)?;
+        let execution = transaction.execution().ok_or_else(|| anyhow!("Expected an execute transaction"))?;
         Ok(format!("{:?}", execution))
     }
 
@@ -435,28 +437,30 @@ impl<N: Network> ProgramManager<N> {
             .get_program_imports_from_source(&program)?
             .iter()
             .try_for_each(|(_, import)| {
-                if import.id() != &credits_id && !vm.process().read().contains_program(import.id())
+                if import.id() != &credits_id && !vm.process().contains_program(import.id())
                 {
-                    vm.process().write().add_program(import)?;
+                    vm.process().lock().add_program(import)?;
                 }
                 Ok::<_, Error>(())
             })?;
 
         // If the initialization is for an execution, add the program. Otherwise, don't add it as
         // it will be added during the deployment process
-        if !vm.process().read().contains_program(program.id()) {
+        if !vm.process().contains_program(program.id()) {
             // If the program doesn't have a constructor, use edition 1 to avoid edition 0 execution errors
             // in ConsensusVersion::V8 or higher
             if program.contains_constructor() {
-                vm.process().write().add_program(&program)?;
+                vm.process().lock().add_program(&program)?;
             } else {
-                vm.process().write().add_program_with_edition(&program, 1)?;
+                vm.process().lock().add_program_with_edition(&program, 1)?;
             }
         }
-        let rng = &mut rand::thread_rng();
+        let rng = &mut rand::rng();
 
-        // Compute the execution.
-        let (execution, _response) = vm.execute_authorization_raw(authorization, &query, rng)?;
+        // Keep returning the raw Execution here as well; callers parse it back
+        // into `Execution` for fee authorization and offline transaction build.
+        let transaction = vm.execute_authorization(authorization, None, Some(&query), rng)?;
+        let execution = transaction.execution().ok_or_else(|| anyhow!("Expected an execute transaction"))?;
         Ok(format!("{:?}", execution))
     }
 
@@ -467,10 +471,11 @@ impl<N: Network> ProgramManager<N> {
         // Initialize a VM
         let store = ConsensusStore::<N, ConsensusMemory<N>>::open(StorageMode::Production)?;
         let vm = VM::from(store)?;
-        let rng = &mut rand::thread_rng();
+        let rng = &mut rand::rng();
 
-        // Compute the execution.
-        let execution = vm.execute_fee_authorization_raw(authorization, &query, rng)?;
+        // Public wrapper is sufficient here because callers expect a Fee, not
+        // the private raw fee execution type.
+        let execution = vm.execute_fee_authorization(authorization, Some(&query), rng)?;
         Ok(execution.to_string())
     }
 
@@ -486,7 +491,7 @@ impl<N: Network> ProgramManager<N> {
 
         // Generate the execution transaction
         let authorization = {
-            let rng = &mut rand::thread_rng();
+            let rng = &mut rand::rng();
 
             // Initialize a VM
             let store = ConsensusStore::<N, ConsensusMemory<N>>::open(StorageMode::Production)?;
@@ -510,7 +515,7 @@ impl<N: Network> ProgramManager<N> {
 
         // Generate the execution transaction
         let authorization = {
-            let rng = &mut rand::thread_rng();
+            let rng = &mut rand::rng();
 
             // Initialize a VM
             let store = ConsensusStore::<N, ConsensusMemory<N>>::open(StorageMode::Production)?;
@@ -536,7 +541,7 @@ impl<N: Network> ProgramManager<N> {
         let program_id = ProgramID::<N>::from_str(&program_id)?;
         // Generate the execution transaction
         let authorization = {
-            let rng = &mut rand::thread_rng();
+            let rng = &mut rand::rng();
 
             // Initialize a VM
             let store = ConsensusStore::<N, ConsensusMemory<N>>::open(StorageMode::Production)?;
@@ -554,22 +559,22 @@ impl<N: Network> ProgramManager<N> {
                 .iter()
                 .try_for_each(|(_, import)| {
                     if import.id() != &credits_id
-                        && !vm.process().read().contains_program(import.id())
+                        && !vm.process().contains_program(import.id())
                     {
-                        vm.process().write().add_program(import)?;
+                        vm.process().lock().add_program(import)?;
                     }
                     Ok::<_, Error>(())
                 })?;
 
             // If the initialization is for an execution, add the program. Otherwise, don't add it as
             // it will be added during the deployment process
-            if !vm.process().read().contains_program(program.id()) {
+            if !vm.process().contains_program(program.id()) {
                 // If the program doesn't have a constructor, use edition 1 to avoid edition 0 execution errors
                 // in ConsensusVersion::V8 or higher
                 if program.contains_constructor() {
-                    vm.process().write().add_program(&program)?;
+                    vm.process().lock().add_program(&program)?;
                 } else {
-                    vm.process().write().add_program_with_edition(&program, 1)?;
+                    vm.process().lock().add_program_with_edition(&program, 1)?;
                 }
             }
             // Compute the authorization.
@@ -591,7 +596,7 @@ impl<N: Network> ProgramManager<N> {
         let private_key = self.get_private_key(password)?;
         let program_id = ProgramID::<N>::from_str(&program_id)?;
         // Generate the execution transaction
-        let rng = &mut rand::thread_rng();
+        let rng = &mut rand::rng();
 
         // Initialize a VM
         let store = ConsensusStore::<N, ConsensusMemory<N>>::open(StorageMode::Production)?;
@@ -608,26 +613,26 @@ impl<N: Network> ProgramManager<N> {
             .get_program_imports_from_source(&program)?
             .iter()
             .try_for_each(|(_, import)| {
-                if import.id() != &credits_id && !vm.process().read().contains_program(import.id())
+                if import.id() != &credits_id && !vm.process().contains_program(import.id())
                 {
-                    vm.process().write().add_program(import)?;
+                    vm.process().lock().add_program(import)?;
                 }
                 Ok::<_, Error>(())
             })?;
 
         // If the initialization is for an execution, add the program. Otherwise, don't add it as
         // it will be added during the deployment process
-        if !vm.process().read().contains_program(program.id()) {
+        if !vm.process().contains_program(program.id()) {
             // If the program doesn't have a constructor, use edition 1 to avoid edition 0 execution errors
             // in ConsensusVersion::V8 or higher
             if program.contains_constructor() {
-                vm.process().write().add_program(&program)?;
+                vm.process().lock().add_program(&program)?;
             } else {
-                vm.process().write().add_program_with_edition(&program, 1)?;
+                vm.process().lock().add_program_with_edition(&program, 1)?;
             }
         }
         // Compute the minimum execution cost.
-        let (minimum_execution_cost, (_, _)) = execution_cost(&vm.process().read(), &execution, ConsensusVersion::V10)?;
+        let (minimum_execution_cost, (_, _)) = execution_cost(vm.process(), &execution, ConsensusVersion::V10)?;
         // Compute the execution ID.
         let execution_id = execution.to_execution_id()?;
         // Authorize the fee.
